@@ -3,4 +3,4 @@ project(cpp_training_new)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(cpp_training_new main.cpp my_vector.h my_std_vector.h)
+add_executable(cpp_training_new main.cpp my_vector.h my_std_vector.h filehandler.h)
