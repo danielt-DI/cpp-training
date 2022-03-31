@@ -42,13 +42,14 @@ public:
     bool fail() const {return fh_fstream.fail();}
     bool bad() const {return fh_fstream.bad();}
     bool operator!() const {return !fh_fstream;}
-    std::ios_base::iostate exceptions() const {return fh_fstream.exceptions();};
+    std::ios::iostate exceptions() const {return fh_fstream.exceptions();};
 
     std::ostream& operator<<(const char* s) {fh_fstream << s << std::endl; return fh_fstream;}
 };
 
-void file_handler::open(const fs::path& path, std::ios_base::openmode mode) {
+void file_handler::open(const fs::path& path, std::ios::openmode mode) {
     fh_fstream.open(path.string(), mode);
+    fh_fstream.exceptions(std::ios::failbit | std::ios::badbit | std::ios::eofbit);
 }
 
 #endif //CPP_TRAINING_NEW_FILEHANDLER_H
