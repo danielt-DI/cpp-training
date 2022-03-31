@@ -16,14 +16,14 @@ class file_handler {
 
 public:
     // constructor
-    file_handler(fs::path p) {fh_fstream.open(p.string(), std::ios::out | std::ios::in | std::ios::trunc);}
+    file_handler() {};
 
     // destructor
     virtual ~file_handler() { if(fh_fstream.is_open()) {fh_fstream.close();}}
 
     // file handler interface
 
-    void open(const std::string &filename,std::ios_base::openmode mode = std::ios_base::in|std::ios_base::out) {fh_fstream.open(filename, mode);}
+    void open(const fs::path& path,std::ios_base::openmode mode = std::ios_base::in|std::ios_base::out);
     bool is_open() { return fh_fstream.is_open();};
     void close() {fh_fstream.close();}
     void read(char* buff, std::streamsize count) {fh_fstream.read(buff, count);}
@@ -42,8 +42,13 @@ public:
     bool fail() const {return fh_fstream.fail();}
     bool bad() const {return fh_fstream.bad();}
     bool operator!() const {return !fh_fstream;}
+    std::ios_base::iostate exceptions() const {return fh_fstream.exceptions();};
 
     std::ostream& operator<<(const char* s) {fh_fstream << s << std::endl; return fh_fstream;}
 };
+
+void file_handler::open(const fs::path& path, std::ios_base::openmode mode) {
+    fh_fstream.open(path.string(), mode);
+}
 
 #endif //CPP_TRAINING_NEW_FILEHANDLER_H
