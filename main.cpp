@@ -1,8 +1,8 @@
-#include <iostream>
-#include "filehandler.h"
+#include "concurrency.h"
+
 int main() {
 
-    exepcions_exe_tester();
+    concurrency_exe_tester();
 
     std::cout << "Finished" << std::endl;
 
