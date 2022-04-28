@@ -45,18 +45,10 @@ void FileSystemMonitor::monitor_events() {
     ssize_t path_len, proc_name_len;
     int pinfo;
     char procfd_file_path[PATH_MAX], procfd_proc_path[PATH_MAX];
+    uint32_t response;
 
     while(is_running) {
         EventItem event = event_q.wait_pop();
-
-        // get file path
-        snprintf(procfd_file_path, sizeof(procfd_file_path), "/proc/self/fd/%d", event.fd);
-        path_len = readlink(procfd_file_path, path, sizeof(path) - 1);
-        if (path_len == -1) {
-            throw_errno("readlink error");
-        }
-
-        std::cout << "got a new event on " << path << std::endl;
 
         // get process name
         sprintf(procfd_proc_path, "/proc/%d/cmdline", event.pid);
@@ -68,19 +60,28 @@ void FileSystemMonitor::monitor_events() {
             }
         }
 
-        std::cout << "event caused by: " << proc_name << std::endl;
-
-        // cross reference the path in the event with lists
-        auto file_iter = files_paths.find(path);
         auto proc_iter = exec_paths.find(proc_name);
-        if ((file_iter != files_paths.end()) && (proc_iter == exec_paths.end())) {
-            // deny
-            std::cout << "access denied" << std::endl;
-            reply_q.push({event.fd, FAN_DENY});
+        // process is in the authorized process list, no need to check file path
+        if (proc_iter != exec_paths.end()) {
+            response = FAN_ALLOW;
         } else {
-            // approve
-            std::cout << "access approved" << std::endl;
-            reply_q.push({event.fd, FAN_ALLOW});
+            // get file path
+            snprintf(procfd_file_path, sizeof(procfd_file_path), "/proc/self/fd/%d", event.fd);
+            path_len = readlink(procfd_file_path, path, sizeof(path) - 1);
+            if (path_len == -1) {
+                throw_errno("readlink error");
+            }
+
+            auto file_iter = files_paths.find(path);
+            // file is not monitored
+            if (file_iter == files_paths.end()) {
+                response = FAN_ALLOW;
+            // file is monitored and process is unauthorized
+            } else {
+                response = FAN_DENY;
+            }
         }
+
+        reply_q.push({event.fd, response});
     }
 }

@@ -11,11 +11,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
-
-typedef struct {
-    int32_t fd;
-    int32_t pid;
-} EventItem;
+#include "Definitions.h"
 
 template<typename T>
 class FanAsyncQueue {

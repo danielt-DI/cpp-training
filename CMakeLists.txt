@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS -pthread)
 
 add_executable(cpp_training_new main.cpp my_vector.h my_std_vector.h filehandler.h concurrency.h FaNotifyHandler.cpp FaNotifyHandler.h FileSystemMonitor.cpp FileSystemMonitor.h FanAsyncQueue.h)
-add_executable(fanotify_tester fanotify_tester.cpp FaNotifyHandler.cpp FaNotifyHandler.h FileSystemMonitor.cpp FileSystemMonitor.h)
+add_executable(fanotify_tester fanotify_tester.cpp FaNotifyHandler.cpp FaNotifyHandler.h FileSystemMonitor.cpp FileSystemMonitor.h Definitions.h)
 add_executable(try_to_open try_to_open.cpp)
