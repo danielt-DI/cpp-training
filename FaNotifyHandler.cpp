@@ -43,20 +43,19 @@ void FaNotifyHandler::start() {
     std::cout << "starting fanotify handler" << std::endl;
     // lunch polling thread
     is_running = 1;
-    t = std::thread(&FaNotifyHandler::poll_fanotify_fd, this);
+    t_poll_fanotify = std::thread(&FaNotifyHandler::poll_fanotify_fd, this);
 }
 
 void FaNotifyHandler::stop() {
     is_running = 0;
-    t.join();
+    t_poll_fanotify.join();
     std::cout << "fanotify handler stopped" << std::endl;
 }
 
 // private definitions
 
 void FaNotifyHandler::throw_errno(const std::string& msg) {
-    std::cout << msg << std::endl;
-    throw std::system_error(std::make_error_code((std::errc)errno));
+    throw std::system_error(errno, std::generic_category(), msg);
 }
 
 #pragma clang diagnostic push
@@ -108,34 +107,27 @@ void FaNotifyHandler::read_fan_events(int fd) {
     ssize_t path_len;
     char procfd_path[PATH_MAX];
 
-    while(is_running) {
-        // read events
-        len = read(fd, buff, sizeof(buff));
-        if(len == -1 && errno != EAGAIN) {
-            throw_errno("could not read from fanotify fd");
+    // read events
+    len = read(fd, buff, sizeof(buff));
+    if(len == -1 && errno != EAGAIN) {
+        throw_errno("could not read from fanotify fd");
+    }
+
+    metadata = buff;
+
+    // push all available events to queue
+    while(FAN_EVENT_OK(metadata, len)) {
+        if (metadata->vers != FANOTIFY_METADATA_VERSION) {
+            throw_errno("Mismatch of fanotify metadata version");
         }
 
-        if(len == -1) {
-            break;
+        // for now ignore queue overflow (does not set errno, need to decide what exception to throw)
+
+        if ((metadata->fd >= 0) && (metadata->mask & FAN_OPEN_PERM)) {
+            // create EventItem and push to queue
+            event_q.push(EventItem{metadata->fd, metadata->pid});
         }
-
-        metadata = buff;
-
-        // push all available events to queue
-        while(FAN_EVENT_OK(metadata, len)) {
-            if (metadata->vers != FANOTIFY_METADATA_VERSION) {
-                throw_errno("Mismatch of fanotify metadata version");
-            }
-
-            // for now ignore queue overflow (does not set errno, need to decide what exception to throw)
-
-            if ((metadata->fd >= 0) && (metadata->mask & FAN_OPEN_PERM)) {
-                // create EventItem and push to queue
-                event_q.push(EventItem{metadata->fd, metadata->pid});
-            }
-
-            metadata = FAN_EVENT_NEXT(metadata, len);
-        }
+     metadata = FAN_EVENT_NEXT(metadata, len);
     }
 }
 
@@ -156,17 +148,3 @@ void FaNotifyHandler::handle_fan_replies() {
 }
 
 #pragma clang diagnostic pop
-
-void FaNotifyHandler_tester() {
-    std::filesystem::path test_file("test_file.txt");
-    std::set<std::filesystem::path> paths;
-    paths.insert(test_file);
-
-    // create queues first
-
-    //FaNotifyHandler fan_handler(paths);
-    //fan_handler.start();
-    std::cout << "press enter to stop ... ";
-    std::cin.get();
-    //fan_handler.stop();
-}

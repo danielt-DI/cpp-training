@@ -30,7 +30,7 @@ class FaNotifyHandler {
     int ep_fd;
 
     // polling thread
-    std::thread t;
+    std::thread t_poll_fanotify;
 
     // private functions
     void throw_errno(const std::string& msg);
@@ -50,7 +50,7 @@ public:
     // FaNotify handler interface
     void start();
     void stop();
-    void wait() {t.join();}
+    void wait() {t_poll_fanotify.join();}
 
     // optional - add option to change maximum events
 };
