@@ -1,8 +1,7 @@
-#include "concurrency.h"
+#include <iostream>
+#include "FaNotifyHandler.h"
 
 int main() {
-
-    concurrency_exe_tester();
 
     std::cout << "Finished" << std::endl;
 
